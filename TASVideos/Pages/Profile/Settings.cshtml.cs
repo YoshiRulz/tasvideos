@@ -3,7 +3,11 @@
 namespace TASVideos.Pages.Profile;
 
 [Authorize]
-public class SettingsModel(UserManager userManager, IEmailService emailService, ApplicationDbContext db) : BasePageModel
+public class SettingsModel(
+	UserManager userManager,
+	IEmailService emailService,
+	ApplicationDbContext db,
+	IHttpClientFactory httpClientFactory) : BasePageModel
 {
 	public static readonly List<SelectListItem> AvailablePronouns = Enum
 		.GetValues<PreferredPronounTypes>()
@@ -89,8 +93,78 @@ public class SettingsModel(UserManager userManager, IEmailService emailService, 
 		DecimalFormat = user.DecimalFormat;
 	}
 
+	private const byte AvatarSideLengthLimit = 125;
+
+	/// <summary>Does magic byte checks for PNG, JPEG (JFIF), GIF, and WebP, and attempts to extract the width and height. Does no further parsing.</summary>
+	/// <returns><see langword="true"/> iff within <see cref="AvatarSideLengthLimit"/>x<see cref="AvatarSideLengthLimit"/></returns>
+	/// <exception cref="ArgumentException">if magic bytes don't match any known, or if reached EOF unexpectedly</exception>
+	public static async Task<bool> IsAcceptableImageWithinMaxSize(Stream stream)
+	{
+		const string ErrMsgInvalid = "not an acceptable image";
+		var buf = new byte[16]; // can't use `Span` in `async` methods apparently
+		await stream.ReadExactlyAsync(buf);
+		switch (buf)
+		{
+			case [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52]:
+				// PNG
+				await stream.ReadExactlyAsync(buf, offset: 0, count: 8);
+				return buf is [
+					0, 0, 0, <= AvatarSideLengthLimit, // width
+					0, 0, 0, <= AvatarSideLengthLimit, // height
+					..];
+			case [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, ..]:
+				// JPEG (JFIF)
+#pragma warning disable SA1503
+				// TODO lazily enumerate the stream
+				var buf1 = new byte[Math.Clamp(stream.Length - stream.Position, 0, 0x800)];
+				await stream.ReadExactlyAsync(buf1);
+				var iter = buf1.AsEnumerable().GetEnumerator();
+				while (iter.MoveNext())
+				{
+					if (iter.Current is not 0xFF) continue;
+					if (!iter.MoveNext()) break;
+					if (iter.Current is not (0xC0 or 0xC1 or 0xC2 or 0xC9 or 0xCA)) continue; // there are other start-of-frame markers, but these are the 5 supported by libjpeg
+					if (!(iter.MoveNext() && iter.MoveNext() && iter.MoveNext() && iter.MoveNext())) break;
+					if (iter.Current is not 0) return false; // height >= 256
+					if (!iter.MoveNext()) break;
+					if (iter.Current > AvatarSideLengthLimit) return false; // height too large
+					if (!iter.MoveNext()) break;
+					if (iter.Current is not 0) return false; // width >= 256
+					if (!iter.MoveNext()) break;
+					if (iter.Current > AvatarSideLengthLimit) return false; // width too large
+					return true;
+				}
+#pragma warning restore SA1503
+
+				// reached EOF
+				throw new EndOfStreamException(ErrMsgInvalid);
+			case [0x47, 0x49, 0x46, 0x38, 0x37 or 0x39, 0x61, ..]:
+				// GIF
+				return buf is [
+					_, _, _, _, _, _, // magic bytes
+					<= AvatarSideLengthLimit, 0, // width
+					<= AvatarSideLengthLimit, 0, // height
+					..];
+			case [0x52, 0x49, 0x46, 0x46, _, _, _, _, 0x57, 0x45, 0x42, 0x50, ..]:
+				// WebP
+				return true; // TODO
+		}
+
+		throw new ArgumentException(paramName: nameof(stream), message: ErrMsgInvalid);
+	}
+
 	public async Task<IActionResult> OnPost()
 	{
+		HttpClient? httpClient = null;
+		async Task<bool> ResolvesToAcceptableImageWithinMaxSize(string url)
+		{
+			httpClient ??= httpClientFactory.CreateClient();
+			var res = await httpClient.SendAsync(new(HttpMethod.Get, url)); // TODO set Accept header?
+			res.EnsureSuccessStatusCode();
+			using var stream = await res.Content.ReadAsStreamAsync();
+			return await IsAcceptableImageWithinMaxSize(stream);
+		}
+
 		if (!ModelState.IsValid)
 		{
 			return Page();
@@ -101,11 +175,33 @@ public class SettingsModel(UserManager userManager, IEmailService emailService, 
 		{
 			ModelState.AddModelError($"{nameof(AvatarUrl)}", $"Using {site} to host avatars is not allowed.");
 		}
+		else if (AvatarUrl is not null)
+		{
+			var isTooLarge = false;
+			try
+			{
+				isTooLarge = !await ResolvesToAcceptableImageWithinMaxSize(AvatarUrl);
+			}
+			catch (Exception)
+			{
+				ModelState.AddModelError(nameof(AvatarUrl), "This URL doesn't seem to resolve to one of the accepted image types.");
+			}
+
+			if (isTooLarge)
+			{
+				ModelState.AddModelError(nameof(AvatarUrl), $"This URL resolves to an image which is larger than {AvatarSideLengthLimit}x{AvatarSideLengthLimit}.");
+			}
+		}
 
 		site = userManager.AvatarSiteIsBanned(MoodAvatar);
 		if (!string.IsNullOrEmpty(site))
 		{
 			ModelState.AddModelError($"{nameof(AvatarUrl)}", $"Using {site} to host avatars is not allowed.");
+		}
+		else
+		{
+			// off-topic, the above AddModelError call has a typo in the first param
+			// TODO could loop through every mood and check those URIs too...
 		}
 
 		if (!ModelState.IsValid)

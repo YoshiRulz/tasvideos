@@ -17,5 +17,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\TASVideos.Tests.Base\TASVideos.Tests.Base.csproj" />
 		<ProjectReference Include="..\..\TASVideos\TASVideos.csproj" />
+		<EmbeddedResource Include="$(MSBuildProjectDirectory)\Pages\Profile\TestFiles\**\*" />
 	</ItemGroup>
 </Project>

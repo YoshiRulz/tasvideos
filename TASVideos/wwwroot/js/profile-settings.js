@@ -25,6 +25,7 @@ function generateAvatarPreview() {
 }
 
 function validateAvatar() {
+	return;
     const maxWidth = 125;
     const maxHeight = 125;
     const descSection = document.getElementById('avatar-description');

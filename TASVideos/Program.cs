@@ -23,6 +23,7 @@ builder.Services
 	.AddRequestLocalization()
 	.AddCookieConfiguration()
 	.AddGzipCompression(settings)
+	.AddHttpClient()
 	.AddServices();
 
 // Internal Libraries
