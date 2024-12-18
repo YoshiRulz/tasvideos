@@ -16,67 +16,10 @@
 <form client-side-validation="true" method="post" enctype="multipart/form-data">
 	<input condition="@Model.AvailableStatuses.Count <= 1" type="hidden" asp-for="Submission.Status" />
 	<input type="hidden" asp-for="MarkupChanged" id="markup-changed" />
-	<row>
-		<column lg="6" permission="ReplaceSubmissionMovieFile">
-			<fieldset>
-				<label asp-for="Submission.ReplaceMovieFile"></label>
-				<input asp-for="Submission.ReplaceMovieFile" />
-				<div>Your movie packed in a ZIP file (max size: @SiteGlobalConstants.MaximumMovieSizeHumanReadable)</div>
-				<span asp-validation-for="Submission.ReplaceMovieFile"></span>
-			</fieldset>
-		</column>
-		<column lg="6">
-			<fieldset>
-				<label asp-for="Submission.Authors">Author(s)</label>
-				<string-list asp-for="Submission.Authors" />
-				<span asp-validation-for="Submission.Authors"></span>
-			</fieldset>
-			<fieldset>
-				<label asp-for="Submission.ExternalAuthors"></label>
-				<input asp-for="Submission.ExternalAuthors" />
-				<div>Only authors not registered for TASVideos should be listed here. If multiple authors, separate the names with a comma.</div>
-				<span asp-validation-for="Submission.ExternalAuthors"></span>
-			</fieldset>
-		</column>
-	</row>
-	<row>
-		<column lg="6">
-			<fieldset>
-				<label asp-for="Submission.GameVersion"></label>
-				<input asp-for="Submission.GameVersion" placeholder="USA v1.0" />
-				<span asp-validation-for="Submission.GameVersion"></span>
-			</fieldset>
-			<fieldset>
-				<label asp-for="Submission.GameName"></label>
-				<input asp-for="Submission.GameName" placeholder="Example: Mega Man 2" />
-				<span asp-validation-for="Submission.GameName"></span>
-			</fieldset>
-			<fieldset>
-				<label asp-for="Submission.Emulator">Emulator and version</label>
-				<input asp-for="Submission.Emulator" spellcheck="false" placeholder="Example: BizHawk 2.8.0" />
-				<div>Needs to be a specific version that sync was verified on. Does not necessarily need to be the version used by the author.</div>
-				<span asp-validation-for="Submission.Emulator"></span>
-			</fieldset>
-		</column>
-		<column lg="6">
-			<fieldset>
-				<label asp-for="Submission.Goal"></label>
-				<input asp-for="Submission.Goal" placeholder="Example: 100% or princess only; any% can usually be omitted" />
-				<span asp-validation-for="Submission.Goal"></span>
-			</fieldset>
-			<fieldset>
-				<label asp-for="Submission.RomName">ROM filename</label>
-				<input asp-for="Submission.RomName" placeholder="Example: Mega Man II (U) [!].nes" />
-				<span asp-validation-for="Submission.RomName"></span>
-			</fieldset>
-			<fieldset>
-				<label asp-for="Submission.EncodeEmbedLink"></label>
-				<input asp-for="Submission.EncodeEmbedLink" placeholder="https://www.youtube.com/embed/0mregEW6kVU" />
-				<div>Embedded link to a video of your movie. Must be YouTube or niconico.</div>
-				<span asp-validation-for="Submission.EncodeEmbedLink"></span>
-			</fieldset>
-		</column>
-	</row>
+	<submission-metadata-edit is-editing="true" movie-file="Submission.ReplaceMovieFile"
+		authors="Submission.Authors" external-authors="Submission.ExternalAuthors"
+		game-version="Submission.GameVersion" game-name="Submission.GameName" emulator="Submission.Emulator"
+		goal-name="Submission.Goal" rom-name="Submission.RomName" encode-embed-link="Submission.EncodeEmbedLink" />
 	<row>
 		<column lg="6">
 			<fieldset>

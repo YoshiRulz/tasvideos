@@ -1,7 +1,9 @@
 ﻿using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
+
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace TASVideos.TagHelpers;
@@ -66,6 +68,30 @@ public static partial class TagHelperExtensions
 		sb.Append('"');
 		return sb.ToString();
 	}
+
+	public static IHtmlContent InvokeProcessWithChildContent(this TagHelper tagHelper, IHtmlContent? childContent = null)
+	{
+		TagHelperAttributeList tagHelperAttributes = [];
+		TagHelperContext tagHelperContext = new(
+			allAttributes: tagHelperAttributes,
+			items: new Dictionary<object, object>(),
+			uniqueId: Guid.NewGuid().ToString());
+		TagHelperContent tagHelperContent = new DefaultTagHelperContent();
+		if (childContent is not null)
+		{
+			tagHelperContent.AppendHtml(childContent);
+		}
+
+		TagHelperOutput tagHelperOutput = new(tagName: "div", tagHelperAttributes, (_, _) => Task.FromResult(tagHelperContent))
+		{
+			TagMode = TagMode.StartTagAndEndTag,
+		};
+		tagHelper.Process(tagHelperContext, tagHelperOutput);
+		return tagHelperOutput;
+	}
+
+	public static IHtmlContent InvokeProcessWithChildContent(this TagHelper tagHelper, string childContent)
+		=> tagHelper.InvokeProcessWithChildContent(childContent.Length is 0 ? null : new StringHtmlContent(childContent));
 
 	/// <summary>
 	/// Returns raw text HTML escaped suitable for use in a regular element body
