@@ -163,6 +163,7 @@
 					<a class="btn btn-silver btn-sm mb-2" href="https://github.com/TASVideos/tasvideos/commit/@(sha)">&copy; @DateTime.UtcNow.Year - TASVideos v@(version)</a>
 					<a class="btn btn-info btn-sm mb-2" href="/SiteRules">Terms</a>
 					<a class="btn btn-info btn-sm mb-2" href="/api">API</a>
+					<a class="btn btn-info btn-sm mb-2" href="/DiscordServer"><i class="fa-brands fa-discord"></i></a>
 					@{
 						string? path = null;
 						if (ViewData.GetWikiPage() is null && this.Model is not (Publications.ViewModel or Submissions.ViewModel))
