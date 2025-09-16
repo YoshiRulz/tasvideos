@@ -5,16 +5,19 @@
 	ViewData.SetTitle($"{Model.Game.DisplayName}");
 	string wiki = LinkConstants.GameWikiPage + Model.Game.Id;
 	bool canEdit = User.CanEditWiki(wiki);
-	string? url = !string.IsNullOrWhiteSpace(Model.Game.ScreenshotUrl) || Model.Movies.Any()
-		? !string.IsNullOrWhiteSpace(Model.Game.ScreenshotUrl)
-			? Model.Game.ScreenshotUrl
-			: $"{HttpContext.Request.ToBaseUrl()}/media/{Model.Movies.First().Movie.Screenshot.Path}"
-		: null;
-	ViewData.SetMetaTags(new MetaTag
+	var (screenshotUrl, screenshotUrlOrRelUrl) = !string.IsNullOrWhiteSpace(Model.Game.ScreenshotUrl)
+		? (Model.Game.ScreenshotUrl, Model.Game.ScreenshotUrl)
+		: Model.Movies.FirstOrDefault() is { Movie.Screenshot.Path: var firstPubScreenshot }
+			? ($"{HttpContext.Request.ToBaseUrl()}/media/{firstPubScreenshot}", $"/media/{firstPubScreenshot}")
+			: (null, null);
+	if (screenshotUrl is not null)
 	{
-		Title = Model.Game.DisplayName,
-		Image = url
-	});
+		ViewData.SetMetaTags(new MetaTag
+		{
+			Title = Model.Game.DisplayName,
+			Image = screenshotUrl,
+		});
+	}
 
 	if (int.TryParse(Model.Id, out int id))
 	{
@@ -32,7 +35,7 @@
 		</div>
 	</card-header>
 	<card-body class="p-1 p-sm-3">
-		<img class="pull-end img-fluid float-sm-end mb-3 mb-sm-0" src="@url" />
+		<img class="pull-end img-fluid float-sm-end mb-3 mb-sm-0" src="@screenshotUrlOrRelUrl" />
 		@await Html.RenderWiki(wiki)
 		<row>
 			<column md="6">
