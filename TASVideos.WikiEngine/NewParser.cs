@@ -9,6 +9,8 @@ public partial class NewParser
 		public int TextLocation { get; } = textLocation;
 	}
 
+	private readonly List<string> _authorityControlUris = [];
+
 	private readonly List<INode> _output = [];
 	private readonly List<INodeWithChildren> _stack = [];
 	private readonly StringBuilder _currentText = new();
@@ -213,6 +215,13 @@ public partial class NewParser
 		}
 
 		return _index - start;
+	}
+
+	private string EatToEol()
+	{
+		var start = _index;
+		DiscardLine();
+		return _input.AsSpan(start, _index - start).ToString();
 	}
 
 	private void DiscardLine()
@@ -881,6 +890,14 @@ public partial class NewParser
 		{
 			ClearBlockTags();
 		}
+		else if (_stack is [.., IfModule { Condition: "AuthorityControl" }])
+		{
+			var line = EatToEol();
+			if (!string.IsNullOrWhiteSpace(line))
+			{
+				_authorityControlUris.Add(line.TrimEnd());
+			}
+		}
 		else
 		{
 			if (!In("p"))
@@ -980,7 +997,7 @@ public partial class NewParser
 			});
 	}
 
-	public static List<INode> Parse(string content)
+	public static List<INode> Parse(string content, ParsedAuthorityControlContainer? authControlContainer = null)
 	{
 		var p = new NewParser(content);
 		p.ParseLoop();
@@ -988,6 +1005,11 @@ public partial class NewParser
 		ReplaceTocs(p._output);
 		ReplaceTabs(p._output);
 		ReplacePees(p._output);
+		if (authControlContainer != null)
+		{
+			authControlContainer.AuthorityControl = p._authorityControlUris;
+		}
+
 		return p._output;
 	}
 
