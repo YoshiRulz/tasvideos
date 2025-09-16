@@ -1,5 +1,6 @@
 ﻿@page "{id}"
 @using TASVideos.Data.Entity.Game
+@using TASVideos.WikiEngine
 @model IndexModel
 @{
 	ViewData.SetTitle($"{Model.Game.DisplayName}");
@@ -25,6 +26,7 @@
 	}
 
 	SortedSet<string> platforms = new(Model.Game.Versions.Select(v => v.SystemCode!));
+	ParsedAuthorityControlContainer authControlContainer = new();
 }
 
 <card class="mb-3">
@@ -36,7 +38,7 @@
 	</card-header>
 	<card-body class="p-1 p-sm-3">
 		<img class="pull-end img-fluid float-sm-end mb-3 mb-sm-0" src="@screenshotUrlOrRelUrl" />
-		@await Html.RenderWiki(wiki)
+		@await Html.RenderWiki(wiki, authControlContainer)
 		<row>
 			<column md="6">
 				<ul>
@@ -89,6 +91,27 @@
 						<li>@genre</li>
 					}
 				</ul>
+				@if (authControlContainer.AuthorityControl?.Count is not (null or 0))
+				{
+					<label>Authority Control:</label>
+					<ul>
+					@foreach (var authorityControlUri in authControlContainer.AuthorityControl)
+					{
+						@:<li>
+						const string pfxWikidata = "http://www.wikidata.org/entity/";
+						if (authorityControlUri.StartsWith(pfxWikidata))
+						{
+							// or do we want to go the other way?
+							<a href="https://www.wikidata.org/wiki/@authorityControlUri[pfxWikidata.Length..]">Wikidata Item</a>
+						}
+						else
+						{
+							<code>@authorityControlUri</code>
+						}
+						@:</li>
+					}
+					</ul>
+				}
 			</column>
 		</row>
 	</card-body>

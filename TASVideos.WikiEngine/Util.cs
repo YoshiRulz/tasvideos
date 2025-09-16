@@ -34,12 +34,16 @@ public static class Util
 		}
 	}
 
-	public static async Task RenderHtmlAsync(string content, TextWriter w, IWriterHelper h)
+	public static async Task RenderHtmlAsync(
+		string content,
+		TextWriter w,
+		IWriterHelper h,
+		ParsedAuthorityControlContainer? authControlContainer = null) // can't have `out` param w/ `Task`
 	{
 		List<INode> results;
 		try
 		{
-			results = NewParser.Parse(content);
+			results = NewParser.Parse(content, authControlContainer);
 		}
 		catch (NewParser.SyntaxException e)
 		{

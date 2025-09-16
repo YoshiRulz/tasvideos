@@ -21,7 +21,11 @@ public partial class WikiMarkup(IViewComponentHelper viewComponentHelper) : TagH
 		((IViewContextAware)viewComponentHelper).Contextualize(ViewContext);
 		output.TagName = "article";
 		output.AddCssClass("wiki");
-		await Util.RenderHtmlAsync(Markup ?? "", new TagHelperTextWriter(output.Content), this);
+		await Util.RenderHtmlAsync(
+			Markup ?? "",
+			new TagHelperTextWriter(output.Content),
+			this,
+			ViewContext.ViewData[nameof(ParsedAuthorityControlContainer)] as ParsedAuthorityControlContainer);
 	}
 
 	bool IWriterHelper.CheckCondition(string condition)
