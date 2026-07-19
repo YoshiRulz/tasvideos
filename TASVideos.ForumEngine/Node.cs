@@ -339,6 +339,7 @@ public class Element : INode
 				break;
 			case "img":
 				{
+					w.OpenTag("picture");
 					w.VoidTag("img");
 					TryParseSize(out var width, out var height);
 					if (width != null)
@@ -353,6 +354,7 @@ public class Element : INode
 
 					w.Attribute("src", GetChildText());
 					w.Attribute("class", "mw-100");
+					w.CloseTag("picture");
 				}
 
 				break;

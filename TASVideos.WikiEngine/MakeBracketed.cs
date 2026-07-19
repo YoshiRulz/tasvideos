@@ -309,7 +309,9 @@ public static partial class Builtins
 
 		attrs.Add(Attr("class", classString.ToString()));
 
-		return new Element(charStart, "img", attrs, []) { CharEnd = charEnd };
+		return new Element(charStart, "picture", [
+			new Element(charStart, "img", attrs, []) { CharEnd = charEnd },
+		]) { CharEnd = charEnd };
 	}
 
 	[GeneratedRegex(@"^(\d+)$")]
