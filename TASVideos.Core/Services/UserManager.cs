@@ -13,6 +13,7 @@ public interface IUserManager
 	Task<User?> FindById(string? userId);
 	Task<User?> FindByEmail(string email);
 	Task<UserProfile?> GetUserProfile(string userName, bool includeHiddenUserFiles, bool seeRestrictedPosts);
+	string BannedAvatarSitesCSS { get; }
 	string[] GetBannedAvatarSites();
 	string? AvatarSiteIsBanned(string? avatar);
 	Task<IdentityResult> ChangeEmail(User user, string newEmail, string token);
@@ -421,6 +422,10 @@ internal class UserManager(
 		"rphaven.org",
 		"usuarios.lycos.es"
 	];
+
+	public string BannedAvatarSitesCSS
+		=> field ??= $":is({string.Join(", ", BannedAvatarSites.Select(domain => $"[src^=\"https://{domain}/\"]"))})";
+
 	public string[] GetBannedAvatarSites() => BannedAvatarSites;
 
 	public string? AvatarSiteIsBanned(string? avatar)

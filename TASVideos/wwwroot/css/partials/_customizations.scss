@@ -295,6 +295,15 @@ ol, ul, dl {
     }
 }
 
+picture::before {
+	background: var(--bs-danger);
+	border-radius: 0.5em;
+	content: "WARNING: This image host is unreliable.\A To ensure it can be viewed in the future, reupload it to catbox.moe / imgur.com.";
+	display: none;
+	padding: 0 0.25em;
+	white-space: pre;
+}
+
 .error-code {
 	border: 2px solid var(--bs-danger);
 	padding: 20px;

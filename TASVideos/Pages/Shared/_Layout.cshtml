@@ -2,6 +2,7 @@
 @using Microsoft.Extensions.Hosting
 @using TASVideos.Core.Services.Wiki
 @inject IHostEnvironment Env
+@inject IUserManager UserManager
 @inject IWikiPages WikiPages
 <!DOCTYPE html>
 <html lang="en">
@@ -29,6 +30,7 @@
 	{
 		<link rel="stylesheet" href="/css/forum.css" />
 	}
+	<style>#preview-container picture:has(> @Html.Raw(UserManager.BannedAvatarSitesCSS))::before { display: table@*https://stackoverflow.com/a/32919558*@; }</style>
 
 	<script src="~/js/site-head.js"></script>
 
